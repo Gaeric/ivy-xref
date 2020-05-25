@@ -51,6 +51,9 @@
   :type 'boolean
   :group 'ivy-xref)
 
+(defvar ivy-xref-collection-cands nil
+  "cands for ivy-xref occur")
+
 (defun ivy-xref-make-collection (xrefs)
   "Transform XREFS into a collection for display via `ivy-read'."
   (let ((collection nil))
@@ -94,7 +97,8 @@
     (let ((orig-buf (current-buffer))
           (orig-pos (point))
           done)
-      (ivy-read "xref: " (ivy-xref-make-collection xrefs)
+      (ivy-read "xref: " (setq ivy-xref-collection-cands
+                               (ivy-xref-make-collection xrefs))
                 :require-match t
                 :action (lambda (candidate)
                           (setq done (eq 'ivy-done this-command))
@@ -131,6 +135,22 @@ Will jump to the definition if only one is found."
       (ivy-xref-show-xrefs fetcher
                            (cons (cons 'fetched-xrefs xrefs)
                                  alist))))))
+
+(defun ivy-xref-occur (&optional _cands)
+  "Open occur buffer for `counsel-etags-grep'."
+  (unless (eq major-mode 'ivy-occur-grep-mode)
+    (ivy-occur-grep-mode)
+    (font-lock-mode -1))
+  ;; useless to set `default-directory', it's already correct
+  ;; we use regex in elisp, don't unquote regex
+  (let* ((cands (ivy--filter ivy-text
+                             ivy-xref-collection-cands)))
+    (swiper--occur-insert-lines
+     (mapcar
+      (lambda (cand) (concat "./" cand))
+      cands))))
+
+(ivy-set-occur 'ivy-xref-show-xrefs 'ivy-xref-occur)
 
 (provide 'ivy-xref)
 ;;; ivy-xref.el ends here
