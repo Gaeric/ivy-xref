@@ -92,7 +92,11 @@
                     (or (assoc-default 'fetched-xrefs alist)
                         (funcall fetcher))
                     fetcher))
-         (buffer (xref--show-xref-buffer fetcher alist)))
+         (xrefs-alist
+          (if (assoc-default 'fetched-xrefs alist)
+              alist
+            (append alist (list (cons 'fetched-xrefs xrefs)))))
+         (buffer (xref--show-xref-buffer fetcher xrefs-alist)))
     (quit-window)
     (let ((orig-buf (current-buffer))
           (orig-pos (point))
